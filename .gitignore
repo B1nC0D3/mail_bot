@@ -132,3 +132,4 @@ dmypy.json
 .idea
 
 requests.http
+files/
