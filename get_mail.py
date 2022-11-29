@@ -8,8 +8,7 @@ from bs4 import BeautifulSoup
 
 def get_mail(mail, password, domain):
     imap = imaplib.IMAP4_SSL('imap.yandex.ru')
-    imap.login('kudrkirya@yandex.ru', 'Cjabz2007!')
-    #imap.login(mail, password)
+    imap.login(mail, password)
     mails = []
     numbers = get_mail_numbers(imap, domain)
     for number in numbers:
@@ -22,7 +21,7 @@ def get_mail(mail, password, domain):
 
 def get_mail_numbers(imap, domain):
     imap.select('INBOX')
-    numbers = imap.search(None, '(UNSEEN HEADER FROM "@mail.ru")')[1][0].split()
+    numbers = imap.search(None, f'(UNSEEN HEADER FROM "{domain}")')[1][0].split()
     return numbers
 
 def get_mail_data(imap, number):
