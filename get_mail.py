@@ -3,12 +3,15 @@ import email
 from email.header import decode_header
 import base64
 from bs4 import BeautifulSoup
-
+import exceptions
 
 
 def get_mail(mail, password, domain):
-    imap = imaplib.IMAP4_SSL('imap.yandex.ru')
-    imap.login(mail, password)
+    try:
+        imap = imaplib.IMAP4_SSL('imap.yandex.ru')
+        imap.login(mail, password)
+    except Exception:
+        raise exceptions.LoginError('Не удалось присоедениться к серверу')
     mails = []
     numbers = get_mail_numbers(imap, domain)
     for number in numbers:
@@ -26,21 +29,36 @@ def get_mail_numbers(imap, domain):
 
 def get_mail_data(imap, number):
     code, msg = imap.fetch(number, '(RFC822)')
-    message = email.message_from_bytes(msg[0][1])
-    subject = decode_header(message['Subject'])[0][0].decode()
-    mail_from = decode_header(message['From'])[0][0]
+    if not code == 'OK':
+        raise exceptions.MailDataError('Не удалось получить письмо')
+    try:
+        message = email.message_from_bytes(msg[0][1])
+        subject = decode_header(message['Subject'])[0][0].decode()
+        mail_from = decode_header(message['From'])[0][0]
+    except Exception:
+        raise exceptions.MailDataError('Не удалось расшифровать письмо')
     attachments = []
     for part in message.walk():
         if part.get_content_maintype() == 'application':
             filename = part.get_filename()
-            filename = decode_header(filename)[0][0].decode()
-            if not filename: filename = 'tmp.txt'
-            fp = open(f'files/{filename}', 'wb')
-            fp.write(part.get_payload(decode=1))
-            fp.close
+            try:
+                filename = decode_header(filename)[0][0].decode()
+            except Exception:
+                raise exceptions.MailDataError('Не удалось расшифровать имя вложения')
+            if not filename: 
+                filename = 'tmp.txt'
+            try:
+                fp = open(f'files/{filename}', 'wb')
+                fp.write(part.get_payload(decode=1))
+                fp.close
+            except Exception:
+                raise exceptions.MailDataError('Не удалось записать файл')
             attachments.append(f'files/{filename}')
         elif part.get_content_maintype() == 'text' and part.get_content_subtype() == 'html':
-            html = base64.b64decode(part.get_payload()).decode()
+            try:
+                html = base64.b64decode(part.get_payload()).decode()
+            except Exception:
+                raise exceptions.MailDataError('Не удалось расшифровать текст письма')
             soup = BeautifulSoup(html, 'html.parser')
             tag = soup.body
             unsorted_mail_text = ''

@@ -33,7 +33,7 @@ async def cmd_start(message, state):
     )
 
 @dp.message_handler(commands='reset', state='*')
-@dp.message_handler(Text(equals='Сброс', ignore_case=True))
+@dp.message_handler(Text(equals='Сброс', ignore_case=True), state='*')
 async def cmd_cancel(message, state):
     await state.reset_state()
     await message.reply('Настройки сброшены')
@@ -45,7 +45,12 @@ async def check_mail(message, state):
     mail_login = user_data.get('mail_login')
     mail_password = user_data.get('mail_password')
     domain = user_data.get('domain')
-    mails = get_mail(mail_login, mail_password, domain)
+    try:
+        mails = get_mail(mail_login, mail_password, domain)
+    except Exception as e:
+        await message.answer(f'Произошла ошибка {e}')
+        return
+ 
     if len(mails) == 0:
         await message.answer(
             'Новых писем нет!'
@@ -80,7 +85,7 @@ async def settings(message, state):
 
 @dp.message_handler(state=Settings.waiting_for_mail_login)
 async def get_mail_login(message, state):
-    if not re.match(r'^[-\w\.]+@([-\w]+\.)+[-\w]{2,4}$', message.text.lower()):
+    if not re.match(r'^[-\w\.]+@yandex.ru', message.text.lower()):
         await message.answer('Введите корректную почту')
         return
     await state.update_data(mail_login=message.text.lower())
