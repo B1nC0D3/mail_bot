@@ -29,7 +29,9 @@ class Settings(StatesGroup):
 @dp.message_handler(commands='start', state='*')
 async def cmd_start(message, state):
     await message.answer(
-        'test message',
+        'Привет! Бот создан для быстрой проверки почты не выходя из мессенджера. '
+        'Сначала необходимо заполнить настройки в боте и включить доступ к почте по протоколу IMAP, '
+        'после этого бот будет готов к использованию.',
         reply_markup=start_keyboard,
     )
 
@@ -120,6 +122,7 @@ async def blank(message: Message):
 
 async def set_commands(bot: Bot):
     commands = [
+        BotCommand(command='/start', description='Запуск бота'),
         BotCommand(command='/reset', description='Сбросить настройки'),
         BotCommand(command='/get_mail', description='Получить почту (только при заполненных настройках)'),
         BotCommand(command='/settings', description='Настройки')
