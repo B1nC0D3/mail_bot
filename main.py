@@ -1,16 +1,18 @@
-from aiogram import Bot, Dispatcher
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram.dispatcher.filters import Text
-from aiogram.dispatcher import FSMContext
-from aiogram.types import BotCommand, Message
-from dotenv import load_dotenv
+import asyncio
+import imaplib
 import os
 import re
-import imaplib
-import asyncio
-from keys import start_keyboard, main_keyboard
+
+from aiogram import Bot, Dispatcher
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.filters import Text
+from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram.types import BotCommand, Message
+from dotenv import load_dotenv
+
 from get_mail import get_mail
+from keys import main_keyboard, start_keyboard
 
 load_dotenv()
 
