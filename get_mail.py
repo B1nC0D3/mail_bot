@@ -23,11 +23,11 @@ def get_mail(mail: str, password: str, domain: str) -> list:
     return mails
 
 
-
 def get_mail_numbers(imap: IMAP4_SSL, domain: str) -> list:
     imap.select('INBOX')
     numbers = imap.search(None, f'(UNSEEN HEADER FROM "{domain}")')[1][0].split()
     return numbers
+
 
 def get_mail_data(imap: IMAP4_SSL, number: str) -> dict:
     code, msg = imap.fetch(number, '(RFC822)')
@@ -56,7 +56,8 @@ def get_mail_data(imap: IMAP4_SSL, number: str) -> dict:
             except Exception:
                 raise exceptions.MailDataError('Не удалось записать файл')
             attachments.append(f'files/{filename}')
-        elif part.get_content_maintype() == 'text' and part.get_content_subtype() == 'html':
+        elif (part.get_content_maintype() == 'text'
+              and part.get_content_subtype() == 'html'):
             try:
                 html = base64.b64decode(part.get_payload()).decode()
             except Exception:
@@ -74,4 +75,3 @@ def get_mail_data(imap: IMAP4_SSL, number: str) -> dict:
         'attachments': attachments,
         'mail_text': mail_text,
     }
-

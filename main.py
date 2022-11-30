@@ -21,6 +21,7 @@ storage = MemoryStorage()
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot, storage=storage)
 
+
 class Settings(StatesGroup):
     waiting_for_mail_login = State()
     waiting_for_mail_password = State()
@@ -32,10 +33,12 @@ class Settings(StatesGroup):
 async def cmd_start(message, state):
     await message.answer(
         'Привет! Бот создан для быстрой проверки почты не выходя из мессенджера. '
-        'Сначала необходимо заполнить настройки в боте и включить доступ к почте по протоколу IMAP, '
+        'Сначала необходимо заполнить настройки в боте '
+        'и включить доступ к почте по протоколу IMAP, '
         'после этого бот будет готов к использованию.',
         reply_markup=start_keyboard,
     )
+
 
 @dp.message_handler(commands='reset', state='*')
 @dp.message_handler(Text(equals='Сброс', ignore_case=True), state='*')
@@ -43,9 +46,11 @@ async def cmd_cancel(message: Message, state: FSMContext):
     await state.reset_state()
     await message.reply('Настройки сброшены')
 
+
 @dp.message_handler(commands='get_mail', state=Settings.settings_done)
-@dp.message_handler(Text(equals='Проверить почту', ignore_case=True), state=Settings.settings_done)
-async def check_mail(message: Message, state:FSMContext):
+@dp.message_handler(Text(equals='Проверить почту', ignore_case=True),
+                    state=Settings.settings_done)
+async def check_mail(message: Message, state: FSMContext):
     user_data = await state.get_data()
     mail_login = user_data.get('mail_login')
     mail_password = user_data.get('mail_password')
@@ -55,7 +60,6 @@ async def check_mail(message: Message, state:FSMContext):
     except Exception as e:
         await message.answer(f'Произошла ошибка {e}')
         return
- 
     if len(mails) == 0:
         await message.answer(
             'Новых писем нет!'
@@ -82,11 +86,13 @@ async def check_mail(message: Message, state:FSMContext):
                 await message.answer_document(file)
                 file.close
 
+
 @dp.message_handler(commands='settings', state='*')
 @dp.message_handler(Text(equals='Настройки', ignore_case=True), state='*')
 async def settings(message: Message, state: FSMContext):
     await message.answer('Введите яндекс почту в формате urname@yandex.ru')
     await state.set_state(Settings.waiting_for_mail_login.state)
+
 
 @dp.message_handler(state=Settings.waiting_for_mail_login)
 async def get_mail_login(message: Message, state: FSMContext):
@@ -97,6 +103,7 @@ async def get_mail_login(message: Message, state: FSMContext):
     await state.set_state(Settings.waiting_for_mail_password.state)
     await message.answer('Введите пароль от почты')
 
+
 @dp.message_handler(state=Settings.waiting_for_mail_password)
 async def get_mail_password(message: Message, state: FSMContext):
     user_data = await state.get_data()
@@ -106,8 +113,10 @@ async def get_mail_password(message: Message, state: FSMContext):
         await state.update_data(mail_password=message.text)
         await state.set_state(Settings.waiting_for_mail_domen.state)
         await message.answer('Введите отслеживаемый домен без @')
-    except Exception as e:
-        await message.answer('Не удалось войти с указанными данными, проверьте настройки почты и правильность введенных данных')
+    except Exception:
+        await message.answer('Не удалось войти с указанными данными, '
+                             'проверьте настройки почты и правильность введенных данных')
+
 
 @dp.message_handler(state=Settings.waiting_for_mail_domen)
 async def get_mail_domain(message: Message, state: FSMContext):
@@ -118,22 +127,27 @@ async def get_mail_domain(message: Message, state: FSMContext):
     await message.answer('Настройки успешно сохранены!', reply_markup=main_keyboard)
     await state.set_state(Settings.settings_done.state)
 
+
 @dp.message_handler()
 async def blank(message: Message):
     await message.answer('Сначала заполните настройки!')
+
 
 async def set_commands(bot: Bot):
     commands = [
         BotCommand(command='/start', description='Запуск бота'),
         BotCommand(command='/reset', description='Сбросить настройки'),
-        BotCommand(command='/get_mail', description='Получить почту (только при заполненных настройках)'),
+        BotCommand(command='/get_mail',
+                   description='Получить почту (только при заполненных настройках)'),
         BotCommand(command='/settings', description='Настройки')
     ]
     await bot.set_my_commands(commands)
 
+
 async def main():
     await set_commands(bot)
     await dp.start_polling()
+
 
 if __name__ == '__main__':
     asyncio.run(main())
