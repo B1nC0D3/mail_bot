@@ -2,7 +2,8 @@ from aiogram import Bot, Dispatcher
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher.filters import Text
-from aiogram.types import BotCommand
+from aiogram.dispatcher import FSMContext
+from aiogram.types import BotCommand, Message
 from dotenv import load_dotenv
 import os
 import re
@@ -34,13 +35,13 @@ async def cmd_start(message, state):
 
 @dp.message_handler(commands='reset', state='*')
 @dp.message_handler(Text(equals='Сброс', ignore_case=True), state='*')
-async def cmd_cancel(message, state):
+async def cmd_cancel(message: Message, state: FSMContext):
     await state.reset_state()
     await message.reply('Настройки сброшены')
 
 @dp.message_handler(commands='get_mail', state=Settings.settings_done)
 @dp.message_handler(Text(equals='Проверить почту', ignore_case=True), state=Settings.settings_done)
-async def check_mail(message, state):
+async def check_mail(message: Message, state:FSMContext):
     user_data = await state.get_data()
     mail_login = user_data.get('mail_login')
     mail_password = user_data.get('mail_password')
@@ -79,12 +80,12 @@ async def check_mail(message, state):
 
 @dp.message_handler(commands='settings', state='*')
 @dp.message_handler(Text(equals='Настройки', ignore_case=True), state='*')
-async def settings(message, state):
+async def settings(message: Message, state: FSMContext):
     await message.answer('Введите яндекс почту в формате urname@yandex.ru')
     await state.set_state(Settings.waiting_for_mail_login.state)
 
 @dp.message_handler(state=Settings.waiting_for_mail_login)
-async def get_mail_login(message, state):
+async def get_mail_login(message: Message, state: FSMContext):
     if not re.match(r'^[-\w\.]+@yandex.ru', message.text.lower()):
         await message.answer('Введите корректную почту')
         return
@@ -93,7 +94,7 @@ async def get_mail_login(message, state):
     await message.answer('Введите пароль от почты')
 
 @dp.message_handler(state=Settings.waiting_for_mail_password)
-async def get_mail_password(message, state):
+async def get_mail_password(message: Message, state: FSMContext):
     user_data = await state.get_data()
     try:
         imap = imaplib.IMAP4_SSL('imap.yandex.ru')
@@ -105,7 +106,7 @@ async def get_mail_password(message, state):
         await message.answer('Не удалось войти с указанными данными, проверьте настройки почты и правильность введенных данных')
 
 @dp.message_handler(state=Settings.waiting_for_mail_domen)
-async def get_mail_domain(message, state):
+async def get_mail_domain(message: Message, state: FSMContext):
     if not re.match(r'([-\w]+\.)+[-\w]{2,4}$', message.text.lower()):
         await message.answer('Введите корректный домен')
         return
@@ -114,10 +115,10 @@ async def get_mail_domain(message, state):
     await state.set_state(Settings.settings_done.state)
 
 @dp.message_handler()
-async def blank(message, state):
+async def blank(message: Message):
     await message.answer('Сначала заполните настройки!')
 
-async def set_commands(bot):
+async def set_commands(bot: Bot):
     commands = [
         BotCommand(command='/reset', description='Сбросить настройки'),
         BotCommand(command='/get_mail', description='Получить почту (только при заполненных настройках)'),

@@ -1,4 +1,4 @@
-import imaplib
+from imaplib import IMAP4_SSL
 import email
 from email.header import decode_header
 import base64
@@ -6,9 +6,9 @@ from bs4 import BeautifulSoup
 import exceptions
 
 
-def get_mail(mail, password, domain):
+def get_mail(mail: str, password: str, domain: str) -> list:
     try:
-        imap = imaplib.IMAP4_SSL('imap.yandex.ru')
+        imap = IMAP4_SSL('imap.yandex.ru')
         imap.login(mail, password)
     except Exception:
         raise exceptions.LoginError('Не удалось присоедениться к серверу')
@@ -22,12 +22,12 @@ def get_mail(mail, password, domain):
 
 
 
-def get_mail_numbers(imap, domain):
+def get_mail_numbers(imap: IMAP4_SSL, domain: str) -> list:
     imap.select('INBOX')
     numbers = imap.search(None, f'(UNSEEN HEADER FROM "{domain}")')[1][0].split()
     return numbers
 
-def get_mail_data(imap, number):
+def get_mail_data(imap: IMAP4_SSL, number: str) -> dict:
     code, msg = imap.fetch(number, '(RFC822)')
     if not code == 'OK':
         raise exceptions.MailDataError('Не удалось получить письмо')
@@ -72,3 +72,4 @@ def get_mail_data(imap, number):
         'attachments': attachments,
         'mail_text': mail_text,
     }
+
