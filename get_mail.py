@@ -47,7 +47,7 @@ def get_mail_data(imap: IMAP4_SSL, number: str) -> dict:
                 filename = decode_header(filename)[0][0].decode()
             except Exception:
                 raise exceptions.MailDataError('Не удалось расшифровать имя вложения')
-            if not filename: 
+            if not filename:
                 filename = 'tmp.txt'
             try:
                 fp = open(f'files/{filename}', 'wb')
